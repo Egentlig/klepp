@@ -27,7 +27,7 @@
 <div class="wrapper">
     <h1 id="title"></h1>
     <iframe id="video"
-            src="https://clips.twitch.tv/embed?clip=BlazingRichManateeUncleNox-yqWxOh8CdpzZQnkQ&parent=klepprullade.opplegget.no"
+            src="https://clips.twitch.tv/embed?clip=BlazingRichManateeUncleNox-yqWxOh8CdpzZQnkQ&parent=klepprullade.opplegget.no&autoplay=true&muted=false"
             width="1280"
             height="720">
     </iframe>
@@ -61,7 +61,7 @@
         function loadClip(index) {
             const clip = clips[index];
             const video = document.getElementById("video");
-            video.src = `https://clips.twitch.tv/embed?clip=${clip.id}&parent=localhost&autoplay=true&muted=false`;
+            video.src = `https://clips.twitch.tv/embed?clip=${clip.id}&parent=klepprullade.opplegget.no&autoplay=true&muted=false`;
             title.innerText = clip.title;
 
             // Schedule next clip based on duration
