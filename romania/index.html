@@ -65,7 +65,13 @@
         const title = document.getElementById("title");
         const description = document.getElementById("description");
 
-        const response = await fetch("https://api.opplegget.no/twitch/user/klepp/v0/klepp?start=2025-05-29T00:00:00Z");
+        const queryParams = new URLSearchParams(window.location.search);
+        let viewCountLimit = queryParams.get('viewCountLimit');
+        if (viewCountLimit == null) {
+            viewCountLimit = 0;
+        }
+
+        const response = await fetch(`https://api.opplegget.no/twitch/user/klepp/v0/klepp?viewCountLimit=${viewCountLimit}`);
         let clips = await response.json();
 
         let i = 0;
