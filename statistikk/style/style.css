@@ -7,13 +7,13 @@ body {
 
 table th {
     border: 1px solid #909090;
-    padding: 2px 5px;
+    padding: 2px 2px;
     font-size: medium;
 }
 
 table td {
     border: 1px solid #909090;
-    padding: 2px 5px;
+    padding: 2px 2px;
     font-size: large;
 }
 
