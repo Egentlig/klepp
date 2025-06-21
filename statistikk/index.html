@@ -84,6 +84,11 @@
 
         const responseJson = await response.json();
 
+        klipp.innerText = responseJson.klepp;
+        klippere.innerText = responseJson.antallKleppere;
+        totaltAntallVisninger.innerText = responseJson.antallVisninger;
+        totaltAntallSekunder.innerText = responseJson.antallSekunder;
+
         responseJson.toppKlepp.forEach(toppKlepp => {
             const row = document.createElement("tr");
 
