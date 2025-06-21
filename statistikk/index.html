@@ -25,8 +25,8 @@
         <p>Totalt antall visninger</p>
     </div>
     <div class="counter">
-        <h2><b id="totaltAntallSekunder">...</b></h2>
-        <p>Totalt antall sekunder</p>
+        <h2><b id="gjennomsnittslengde">...</b></h2>
+        <p>Gjennomsnittslengde</p>
     </div>
 </div>
 
@@ -73,7 +73,7 @@
         const klipp = document.querySelector("#klipp");
         const klippere = document.querySelector("#klippere");
         const totaltAntallVisninger = document.querySelector("#totaltAntallVisninger");
-        const totaltAntallSekunder = document.querySelector("#totaltAntallSekunder");
+        const gjennomsnittslengde = document.querySelector("#gjennomsnittslengde");
 
         const toppKlippTittel = document.querySelector("#toppKlippTittel");
         const toppKlippTable = document.querySelector("#toppKlippTable");
@@ -88,7 +88,7 @@
         klipp.innerText = responseJson.klepp;
         klippere.innerText = responseJson.antallKleppere;
         totaltAntallVisninger.innerText = responseJson.antallVisninger;
-        totaltAntallSekunder.innerText = responseJson.antallSekunder;
+        gjennomsnittslengde.innerText = `${responseJson.gjennomsnittSekunder} sekunder`;
 
         responseJson.toppKlepp.forEach(toppKlepp => {
             const row = document.createElement("tr");
