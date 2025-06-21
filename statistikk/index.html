@@ -58,6 +58,8 @@
         <th>Klipper</th>
         <th>Klipp</th>
         <th>Visninger</th>
+        <th>Gjennomsnittsvisninger</th>
+        <th>Gjennomsnittslengde</th>
     </tr>
     </thead>
     <tbody id="toppKlippereBody">
@@ -126,6 +128,14 @@
             const visningerData = document.createElement("td");
             visningerData.innerText = toppKlepper.totaltAntallVisninger;
             row.appendChild(visningerData);
+
+            const gjennomsnittsvisningerData = document.createElement("td");
+            gjennomsnittsvisningerData.innerText = toppKlepper.gjennomsnittVisninger;
+            row.appendChild(gjennomsnittsvisningerData);
+
+            const gjennomsnittslengdeData = document.createElement("td");
+            gjennomsnittslengdeData.innerText = `${toppKlepper.gjennomsnittSekunder}s`;
+            row.appendChild(gjennomsnittslengdeData);
 
             toppKlippereBody.appendChild(row);
         });
