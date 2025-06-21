@@ -74,7 +74,8 @@
         let start = queryParams.get('start');
         if (start == null) {
             start = "2023-01-01T00:00:00Z";
-        } else if (spesial === "Romania") {
+        } 
+        if (spesial === "Romania") {
             start = "2025-05-29T00:00:00Z";
         }
         let end = queryParams.get('start');
