@@ -8,7 +8,7 @@
 <body>
 
 <div class="content-center">
-    <h1>Kleppstatistikk</h1>
+    <h1 id="heading">Kleppstatistikk</h1>
 </div>
 
 <div id="klippTall" class="content-center row hide">
@@ -69,7 +69,25 @@
 
 <script type="application/javascript">
     const hentKlippStatistikk = async () => {
-        const response = await fetch("https://api.opplegget.no/twitch/user/klepp/v0/statistikk");
+        const queryParams = new URLSearchParams(window.location.search);
+        const spesial = queryParams.get("spesial");
+        let start = queryParams.get('start');
+        if (start == null) {
+            start = "2023-01-01T00:00:00Z";
+        } else if (spesial === "Romania") {
+            start = "2025-05-29T00:00:00Z";
+        }
+        let end = queryParams.get('start');
+        if (end == null || end === "Romania") {
+            end = "2025-12-31T23:59:59Z";
+        }
+
+        const heading = document.querySelector("#heading");
+        if (spesial === "Romania") {
+            heading.innerText = "Kleppstatistikk - Romania spesial"
+        }
+
+        const response = await fetch(`https://api.opplegget.no/twitch/user/klepp/v0/statistikk?start=${start}&end=${end}`);
 
         const klippTall = document.querySelector("#klippTall");
         const klipp = document.querySelector("#klipp");
