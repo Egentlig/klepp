@@ -34,9 +34,10 @@
     <h5 id="toppKlippTittel" class="hide">Tipp topp klipp da</h5>
 </div>
 
-<table id="toppKlippTable" class="content-center-narrow hide">
+<table id="toppKlippTable" class="content-center hide">
     <thead>
     <tr>
+        <th>Tittel</th>
         <th>Klipper</th>
         <th>Visninger</th>
         <th>Link</th>
@@ -91,6 +92,10 @@
 
         responseJson.toppKlepp.forEach(toppKlepp => {
             const row = document.createElement("tr");
+
+            const tittelData = document.createElement("td");
+            tittelData.innerText = toppKlepp.kleppTittel;
+            row.appendChild(tittelData);
 
             const klipperData = document.createElement("td");
             klipperData.innerText = toppKlepp.klepper;
