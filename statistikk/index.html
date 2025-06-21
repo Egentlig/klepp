@@ -88,7 +88,7 @@
         klipp.innerText = responseJson.klepp;
         klippere.innerText = responseJson.antallKleppere;
         totaltAntallVisninger.innerText = responseJson.antallVisninger;
-        gjennomsnittslengde.innerText = `${responseJson.gjennomsnittSekunder} sekunder`;
+        gjennomsnittslengde.innerText = `${responseJson.gjennomsnittSekunder}s`;
 
         responseJson.toppKlepp.forEach(toppKlepp => {
             const row = document.createElement("tr");
