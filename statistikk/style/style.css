@@ -1,0 +1,62 @@
+body {
+    font-family: "Comic Sans MS", "Comic Sans", system-ui, sans-serif;
+    font-size: x-large;
+    color: white;
+    background-color: black;
+}
+
+table th {
+    border: 1px solid #909090;
+    padding: 2px 5px;
+    font-size: medium;
+}
+
+table td {
+    border: 1px solid #909090;
+    padding: 2px 5px;
+    font-size: large;
+}
+
+.content {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.content-center {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.content-center-narrow {
+    width: 40%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.counter {
+    margin-left: 2rem;
+    margin-right: 2rem;
+}
+
+.x-small {
+    font-size: x-small;
+}
+
+.xx-small {
+    font-size: xx-small;
+}
+
+.hide {
+    visibility: hidden;
+}

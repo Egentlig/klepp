@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <title>Kleppstatistikk</title>
+
+    <link href="style/style.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="content-center">
+    <h1>Kleppstatistikk</h1>
+</div>
+
+<div id="klippTall" class="content-center row hide">
+    <div class="counter">
+        <h2><b id="klipp">...</b></h2>
+        <p>Klipp</p>
+    </div>
+    <div class="counter">
+        <h2><b id="klippere">...</b></h2>
+        <p>Klippere</p>
+    </div>
+    <div class="counter">
+        <h2><b id="totaltAntallVisninger">...</b></h2>
+        <p>Totalt antall visninger</p>
+    </div>
+    <div class="counter">
+        <h2><b id="totaltAntallSekunder">...</b></h2>
+        <p>Totalt antall sekunder</p>
+    </div>
+</div>
+
+<div class="content-center">
+    <h5 id="toppKlippTittel" class="hide">Tipp topp klipp da</h5>
+</div>
+
+<table id="toppKlippTable" class="content-center-narrow hide">
+    <thead>
+    <tr>
+        <th>Klipper</th>
+        <th>Visninger</th>
+        <th>Link</th>
+    </tr>
+    </thead>
+    <tbody id="toppKlippBody">
+
+    </tbody>
+</table>
+
+<div class="content-center">
+    <h5 id="toppKlippereTittel" class="hide">Flinkeste klipperne</h5>
+</div>
+
+<table id="toppKlippereTable" class="content-center-narrow hide">
+    <thead>
+    <tr>
+        <th>Klipper</th>
+        <th>Klipp</th>
+        <th>Visninger</th>
+    </tr>
+    </thead>
+    <tbody id="toppKlippereBody">
+
+    </tbody>
+</table>
+
+<script type="application/javascript">
+    const hentKlippStatistikk = async () => {
+        const response = await fetch("https://api.opplegget.no/twitch/user/klepp/v0/statistikk");
+
+        const klippTall = document.querySelector("#klippTall");
+        const klipp = document.querySelector("#klipp");
+        const klippere = document.querySelector("#klippere");
+        const totaltAntallVisninger = document.querySelector("#totaltAntallVisninger");
+        const totaltAntallSekunder = document.querySelector("#totaltAntallSekunder");
+
+        const toppKlippTittel = document.querySelector("#toppKlippTittel");
+        const toppKlippTable = document.querySelector("#toppKlippTable");
+        const toppKlippBody = document.querySelector("#toppKlippBody");
+
+        const toppKlippereTittel = document.querySelector("#toppKlippereTittel");
+        const toppKlippereTable = document.querySelector("#toppKlippereTable");
+        const toppKlippereBody = document.querySelector("#toppKlippereBody");
+
+        const responseJson = await response.json();
+
+        responseJson.toppKlepp.forEach(toppKlepp => {
+            const row = document.createElement("tr");
+
+            const klipperData = document.createElement("td");
+            klipperData.innerText = toppKlepp.klepper;
+            row.appendChild(klipperData);
+
+            const visningerData = document.createElement("td");
+            visningerData.innerText = toppKlepp.antallVisninger;
+            row.appendChild(visningerData);
+
+            const linkData = document.createElement("td");
+            linkData.innerHTML = `<a href="${toppKlepp.kleppUrl}" target="_blank">Se klipp</a>`;
+            row.appendChild(linkData);
+
+            toppKlippBody.appendChild(row);
+        });
+
+        responseJson.toppKleppere.forEach(toppKlepper => {
+            const row = document.createElement("tr");
+
+            const klipperData = document.createElement("td");
+            klipperData.innerText = toppKlepper.klepper;
+            row.appendChild(klipperData);
+
+            const klippData = document.createElement("td");
+            klippData.innerText = toppKlepper.totaltAntallKlepp;
+            row.appendChild(klippData);
+
+            const visningerData = document.createElement("td");
+            visningerData.innerText = toppKlepper.totaltAntallVisninger;
+            row.appendChild(visningerData);
+
+            toppKlippereBody.appendChild(row);
+        });
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+        Promise.all([
+            hentKlippStatistikk()
+        ]).then(() => {
+            klippTall.classList.remove("hide");
+            toppKlippTittel.classList.remove("hide");
+            toppKlippTable.classList.remove("hide");
+            toppKlippBody.classList.remove("hide");
+            toppKlippereTittel.classList.remove("hide");
+            toppKlippereTable.classList.remove("hide");
+            toppKlippereBody.classList.remove("hide");
+        }).catch(reason => console.error(`Initial load failed. Reason: ${reason}`));
+    });
+</script>
+</body>
+</html>
