@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <title>Klepp</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+
+            background-color: black;
+            color: white;
+        }
+
+        .wrapper {
+            width: 90%;
+            height: 100vh;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+
+        .title {
+            width: 60%;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            display: block;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="wrapper">
+    <h1 id="title" class="title"></h1>
+    <iframe id="video"
+            src="https://clips.twitch.tv/embed?clip=BlazingRichManateeUncleNox-yqWxOh8CdpzZQnkQ&parent=klepp.opplegget.no&autoplay=true&muted=false"
+            width="1280"
+            height="720">
+    </iframe>
+    <p id="description"></p>
+</div>
+
+<script type="application/javascript">
+    function shuffle(array) {
+        let currentIndex = array.length;
+
+        // While there remain elements to shuffle...
+        while (currentIndex !== 0) {
+
+            // Pick a remaining element...
+            let randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+
+            // And swap it with the current element.
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        const title = document.getElementById("title");
+        const description = document.getElementById("description");
+
+        const queryParams = new URLSearchParams(window.location.search);
+        let viewCountLimit = queryParams.get('viewCountLimit');
+        if (viewCountLimit == null) {
+            viewCountLimit = 0;
+        }
+
+        const response = await fetch(`https://api.teknisk.team/twitch/user/klepp/v0/klepp?viewCountLimit=${viewCountLimit}`);
+        let clips = await response.json();
+
+        let i = 0;
+
+        function loadClip(index) {
+            if (i === 0) {
+                shuffle(clips);
+            }
+
+            const clip = clips[index];
+            const video = document.getElementById("video");
+            video.src = `https://clips.twitch.tv/embed?clip=${clip.id}&parent=klepp.opplegget.no&autoplay=true&muted=false`;
+            title.innerText = clip.title;
+            description.innerText = `Klippet av ${clip.creator_name}. Visninger: ${clip.view_count} (Klipp nr. ${index + 1} av ${clips.length}.)`;
+
+            // Schedule next clip based on duration
+            const delay = Math.ceil(clip.duration * 1000); // convert to ms, round up
+            setTimeout(() => {
+                i = (i + 1) % clips.length;
+                loadClip(i);
+            }, delay);
+
+            setTimeout(() => {
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+
+                document.elementFromPoint(centerX, centerY)?.dispatchEvent(
+                    new MouseEvent("click", {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: centerX,
+                        clientY: centerY,
+                    })
+                );
+            }, 500);
+
+            setTimeout(() => {
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+
+                document.elementFromPoint(0, 0)?.dispatchEvent(
+                    new MouseEvent("click", {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: centerX,
+                        clientY: centerY,
+                    })
+                );
+            }, 600);
+        }
+
+        // Start playback with first clip
+        loadClip(i);
+    });
+</script>
+</body>
+</html>
