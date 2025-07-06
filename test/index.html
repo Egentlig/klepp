@@ -94,33 +94,38 @@
                 loadClip(i);
             }, delay);
 
-            setTimeout(() => {
-                const centerX = window.innerWidth / 2;
-                const centerY = window.innerHeight / 2;
+            function simulateMouseMove(fromX, fromY, toX, toY, duration = 500) {
+            const startTime = performance.now();
 
-                document.elementFromPoint(centerX, centerY)?.dispatchEvent(
-                    new MouseEvent("click", {
-                        bubbles: true,
-                        cancelable: true,
-                        clientX: centerX,
-                        clientY: centerY,
-                    })
-                );
-            }, 500);
+            function step(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1); // clamp to 1
 
-            setTimeout(() => {
-                const centerX = window.innerWidth / 2;
-                const centerY = window.innerHeight / 2;
+                const currentX = fromX + (toX - fromX) * progress;
+                const currentY = fromY + (toY - fromY) * progress;
 
-                document.elementFromPoint(0, 0)?.dispatchEvent(
-                    new MouseEvent("click", {
-                        bubbles: true,
-                        cancelable: true,
-                        clientX: centerX,
-                        clientY: centerY,
-                    })
-                );
-            }, 600);
+                const el = document.elementFromPoint(currentX, currentY);
+                if (el) {
+                el.dispatchEvent(new MouseEvent("mousemove", {
+                    bubbles: true,
+                    clientX: currentX,
+                    clientY: currentY
+                }));
+                }
+
+                if (progress < 1) {
+                requestAnimationFrame(step);
+                }
+            }
+
+            requestAnimationFrame(step);
+            }
+
+            // Usage: move from center of screen to top-left corner over 500ms
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+
+            simulateMouseMove(centerX, centerY, 0, 0, 500);
         }
 
         // Start playback with first clip
