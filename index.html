@@ -85,7 +85,7 @@
             const video = document.getElementById("video");
             video.src = `https://clips.twitch.tv/embed?clip=${clip.id}&parent=klepp.opplegget.no&autoplay=true&muted=false`;
             title.innerText = clip.title;
-            description.innerText = `Klippet av ${clip.creatorName}. Visninger: ${clip.viewCount} (Klipp nr. ${index + 1} av ${clips.length}.)`;
+            description.innerText = `Klippet av ${clip.creatorName}. Visninger: ${clip.viewCount} (Klipp nr. ${index + 1} av ${clips.length}.) (${clip.tags.join(",")})`;
 
             // Schedule next clip based on duration
             const delay = Math.ceil(clip.duration * 1000); // convert to ms, round up
