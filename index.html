@@ -92,7 +92,7 @@
             viewCountLimit = 0;
         }
 
-        const response = await fetch(`https://api.j4d.dev/spinner/clip?start=${start}&end=${end}&viewCountLimit=${viewCountLimit}&ignoreTags=karaoke,teknisk,nattero`);
+        const response = await fetch(`https://api.j4d.dev/streamrig/clip?start=${start}&end=${end}&viewCountLimit=${viewCountLimit}&ignoreTags=karaoke,teknisk,nattero`);
         let clips = await response.json();
 
         let i = 0;
