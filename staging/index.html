@@ -148,17 +148,21 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 12px;
+            min-width: 0;
         }
 
         .clapper-mini-row {
             display: grid;
             grid-template-columns: 1fr;
             gap: 10px;
+            min-width: 0;
         }
 
         .clapper-field {
             border: 1px solid rgba(255, 255, 255, 0.22);
             padding: 8px 9px;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .field-label {
@@ -179,6 +183,8 @@
 
         .clip-title-wrapper {
             width: 100%;
+            max-width: 100%;
+            min-width: 0;
             overflow: hidden;
             white-space: nowrap;
         }
@@ -259,26 +265,6 @@
 
 <div class="wrapper">
     <div class="stage">
-        <div class="video-container">
-            <video
-                class="video active"
-                id="video-0"
-                preload="auto"
-                playsinline>
-            </video>
-
-            <video
-                class="video"
-                id="video-1"
-                preload="auto"
-                playsinline>
-            </video>
-
-            <div class="audio-overlay" id="audio-overlay">
-                <span>Klikk for lyd 🔊</span>
-            </div>
-        </div>
-
         <div class="clapper-board">
             <div class="clapper-top"></div>
 
@@ -304,13 +290,34 @@
 
                         <div class="clapper-field">
                             <div class="field-label">KLIPP</div>
-                            <div class="field-value" id="clip-number"></div>
+                            <div class="field-value">
+                                <span id="clip-number"></span><span id="clip-tags"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <div class="video-container">
+            <video
+                class="video active"
+                id="video-0"
+                preload="auto"
+                playsinline>
+            </video>
+
+            <video
+                class="video"
+                id="video-1"
+                preload="auto"
+                playsinline>
+            </video>
+
+            <div class="audio-overlay" id="audio-overlay">
+                <span>Klikk for lyd 🔊</span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -345,6 +352,7 @@
         const clipCreator = document.getElementById("clip-creator");
         const clipDate = document.getElementById("clip-date");
         const clipNumber = document.getElementById("clip-number");
+        const clipTags = document.getElementById("clip-tags");
         const audioOverlay = document.getElementById("audio-overlay");
 
         const videos = [
@@ -417,7 +425,7 @@
                     return;
                 }
 
-                const scrollDistance = -(overflow + 8);
+                const scrollDistance = -overflow;
                 const duration = Math.max(8, overflow / 35 + 5);
 
                 clipTitle.style.setProperty(
@@ -449,6 +457,11 @@
 
             clipNumber.innerText =
                 `${index + 1} / ${clips.length}`;
+
+            clipTags.innerText =
+                clip.tags?.length
+                    ? ` • ${clip.tags.join(", ")}`
+                    : "";
 
             updateTitleScrolling();
         }
