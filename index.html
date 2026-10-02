@@ -10,35 +10,28 @@
 
             background-color: black;
             color: white;
+            font-family: Calibri, Arial, sans-serif;
+            overflow: hidden;
         }
 
         .wrapper {
-            width: 90%;
+            width: 100%;
             height: 100vh;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-        }
 
-        .title {
-            width: 60%;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            display: block;
-            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .video-container {
             position: relative;
+
             width: 1280px;
             height: 720px;
             max-width: 100%;
-            margin-left: auto;
-            margin-right: auto;
+
             background-color: black;
+            overflow: hidden;
         }
 
         .video {
@@ -58,6 +51,88 @@
             visibility: visible;
         }
 
+        .clip-info {
+            position: absolute;
+            left: 14px;
+            bottom: 14px;
+
+            width: min(440px, calc(100% - 28px));
+            box-sizing: border-box;
+            padding: 9px 11px;
+
+            z-index: 50;
+
+            background: #050505;
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 4px;
+
+            text-align: left;
+        }
+
+        .clip-title-wrapper {
+            width: 100%;
+            min-width: 0;
+
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .clip-title {
+            display: inline-block;
+
+            font-size: 17px;
+            line-height: 1.2;
+            font-weight: 800;
+
+            color: rgba(255, 255, 255, 0.95);
+
+            white-space: nowrap;
+            transform: translateX(0);
+        }
+
+        .clip-title.scrolling {
+            animation-name: scroll-title;
+            animation-duration: var(--scroll-duration);
+            animation-timing-function: ease-in-out;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
+        }
+
+        @keyframes scroll-title {
+            0%,
+            18% {
+                transform: translateX(0);
+            }
+
+            82%,
+            100% {
+                transform: translateX(var(--scroll-distance));
+            }
+        }
+
+        .clip-details {
+            margin-top: 5px;
+
+            font-size: 12px;
+            line-height: 1.2;
+
+            color: rgba(255, 255, 255, 0.74);
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .clip-secondary {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.52);
+        }
+
+        .separator {
+            padding: 0 4px;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
         .audio-overlay {
             display: none;
 
@@ -70,7 +145,6 @@
 
             background: rgba(0, 0, 0, 0.45);
 
-            font-family: sans-serif;
             font-size: 42px;
             font-weight: bold;
 
@@ -84,6 +158,7 @@
 
         .audio-overlay span {
             padding: 20px 32px;
+
             border-radius: 12px;
             background: rgba(0, 0, 0, 0.8);
         }
@@ -93,29 +168,43 @@
 <body>
 
 <div class="wrapper">
-    <h1 class="title" id="title"></h1>
-
     <div class="video-container">
         <video
-            class="video active"
-            id="video-0"
-            preload="auto"
-            playsinline>
+                class="video active"
+                id="video-0"
+                preload="auto"
+                playsinline>
         </video>
 
         <video
-            class="video"
-            id="video-1"
-            preload="auto"
-            playsinline>
+                class="video"
+                id="video-1"
+                preload="auto"
+                playsinline>
         </video>
+
+        <div class="clip-info">
+            <div class="clip-title-wrapper" id="clip-title-wrapper">
+                <div class="clip-title" id="clip-title"></div>
+            </div>
+
+            <div class="clip-details">
+                <span>Klippet av <span id="clip-creator"></span></span>
+                <span class="separator">•</span>
+                <span id="clip-date"></span>
+
+                <span class="clip-secondary">
+                    <span class="separator">•</span>
+                    <span id="clip-number"></span>
+                    <span id="clip-tags"></span>
+                </span>
+            </div>
+        </div>
 
         <div class="audio-overlay" id="audio-overlay">
             <span>Klikk for lyd 🔊</span>
         </div>
     </div>
-
-    <p id="description"></p>
 </div>
 
 <script type="application/javascript">
@@ -144,8 +233,12 @@
             hour12: false,
         });
 
-        const title = document.getElementById("title");
-        const description = document.getElementById("description");
+        const clipTitle = document.getElementById("clip-title");
+        const clipTitleWrapper = document.getElementById("clip-title-wrapper");
+        const clipCreator = document.getElementById("clip-creator");
+        const clipDate = document.getElementById("clip-date");
+        const clipNumber = document.getElementById("clip-number");
+        const clipTags = document.getElementById("clip-tags");
         const audioOverlay = document.getElementById("audio-overlay");
 
         const videos = [
@@ -187,7 +280,7 @@
         const clips = await response.json();
 
         if (clips.length === 0) {
-            title.innerText = "Ingen klipp";
+            clipTitle.innerText = "Ingen klipp";
             return;
         }
 
@@ -205,20 +298,58 @@
             audioOverlay.classList.remove("visible");
         }
 
+        function updateTitleScrolling() {
+            clipTitle.classList.remove("scrolling");
+            clipTitle.style.removeProperty("--scroll-distance");
+            clipTitle.style.removeProperty("--scroll-duration");
+
+            requestAnimationFrame(() => {
+                const overflow =
+                    clipTitle.scrollWidth - clipTitleWrapper.clientWidth;
+
+                if (overflow <= 0) {
+                    return;
+                }
+
+                const scrollDistance = -overflow;
+                const duration = Math.max(8, overflow / 35 + 5);
+
+                clipTitle.style.setProperty(
+                    "--scroll-distance",
+                    `${scrollDistance}px`
+                );
+
+                clipTitle.style.setProperty(
+                    "--scroll-duration",
+                    `${duration}s`
+                );
+
+                clipTitle.classList.add("scrolling");
+            });
+        }
+
         function updateMetadata(index) {
             const clip = clips[index];
 
-            title.innerText = clip.title;
+            clipTitle.innerText = clip.title;
+            clipCreator.innerText = clip.creatorName;
 
             const date = new Date(clip.createdAt);
-            const tags = clip.tags ?? [];
 
-            description.innerText =
-                `Klippet av ${clip.creatorName}. ` +
-                `Visninger: ${clip.viewCount}. ` +
-                `Klippet: ${formatter.format(date).replace(",", "")}. ` +
-                `(Klipp nr. ${index + 1} av ${clips.length}.) ` +
-                `(${tags.join(",")})`;
+            clipDate.innerText =
+                formatter
+                    .format(date)
+                    .replace(",", "");
+
+            clipNumber.innerText =
+                `${index + 1} / ${clips.length}`;
+
+            clipTags.innerText =
+                clip.tags?.length
+                    ? ` • ${clip.tags.join(", ")}`
+                    : "";
+
+            updateTitleScrolling();
         }
 
         function prepareVideo(video, clip) {
@@ -233,8 +364,11 @@
                 return;
             }
 
-            const nextClipIndex = (clipIndex + 1) % clips.length;
-            const nextVideoIndex = (activeVideoIndex + 1) % videos.length;
+            const nextClipIndex =
+                (clipIndex + 1) % clips.length;
+
+            const nextVideoIndex =
+                (activeVideoIndex + 1) % videos.length;
 
             prepareVideo(
                 videos[nextVideoIndex],
@@ -258,7 +392,10 @@
                 audioUnlocked = true;
                 hideAudioOverlay();
             } catch (error) {
-                if (error.name === "NotAllowedError" && !audioUnlocked) {
+                if (
+                    error.name === "NotAllowedError" &&
+                    !audioUnlocked
+                ) {
                     console.log(
                         "Autoplay med lyd ble blokkert. Starter video muted."
                     );
@@ -293,8 +430,11 @@
             oldVideo.pause();
             oldVideo.classList.remove("active");
 
-            clipIndex = (clipIndex + 1) % clips.length;
-            activeVideoIndex = (activeVideoIndex + 1) % videos.length;
+            clipIndex =
+                (clipIndex + 1) % clips.length;
+
+            activeVideoIndex =
+                (activeVideoIndex + 1) % videos.length;
 
             await playCurrentClip();
         }
@@ -311,7 +451,10 @@
                 audioUnlocked = true;
                 hideAudioOverlay();
             } catch (error) {
-                console.error("Kunne ikke aktivere lyd", error);
+                console.error(
+                    "Kunne ikke aktivere lyd",
+                    error
+                );
             }
         });
 
@@ -335,7 +478,11 @@
             });
         });
 
-        prepareVideo(videos[activeVideoIndex], clips[clipIndex]);
+        prepareVideo(
+            videos[activeVideoIndex],
+            clips[clipIndex]
+        );
+
         await playCurrentClip();
     });
 </script>
