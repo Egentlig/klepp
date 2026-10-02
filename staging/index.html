@@ -23,27 +23,15 @@
             justify-content: center;
         }
 
-        .stage {
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            gap: 28px;
-
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
         .video-container {
             position: relative;
 
             width: 1280px;
             height: 720px;
-            max-width: calc(100vw - 490px);
+            max-width: 100%;
 
             background-color: black;
             overflow: hidden;
-            flex: 0 1 auto;
         }
 
         .video {
@@ -61,6 +49,96 @@
 
         .video.active {
             visibility: visible;
+        }
+
+        .clip-info {
+            position: absolute;
+            left: 14px;
+            bottom: 14px;
+
+            width: min(520px, calc(100% - 28px));
+            box-sizing: border-box;
+            padding: 9px 11px;
+
+            z-index: 50;
+
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 5px;
+
+            text-align: left;
+        }
+
+        .clip-title-wrapper {
+            width: 100%;
+            min-width: 0;
+
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .clip-title {
+            display: inline-block;
+
+            font-size: 15px;
+            line-height: 1.2;
+            font-weight: 600;
+
+            color: rgba(255, 255, 255, 0.88);
+
+            white-space: nowrap;
+            transform: translateX(0);
+        }
+
+        .clip-title.scrolling {
+            animation-name: scroll-title;
+            animation-duration: var(--scroll-duration);
+            animation-timing-function: ease-in-out;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
+        }
+
+        @keyframes scroll-title {
+            0%,
+            18% {
+                transform: translateX(0);
+            }
+
+            82%,
+            100% {
+                transform: translateX(var(--scroll-distance));
+            }
+        }
+
+        .clip-details {
+            margin-top: 5px;
+
+            font-size: 11px;
+            line-height: 1.2;
+
+            color: rgba(255, 255, 255, 0.68);
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .clip-extra {
+            margin-top: 3px;
+
+            font-size: 9px;
+            line-height: 1.2;
+
+            color: rgba(255, 255, 255, 0.45);
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .separator {
+            padding: 0 5px;
+            color: rgba(255, 255, 255, 0.3);
         }
 
         .audio-overlay {
@@ -92,241 +170,47 @@
             border-radius: 12px;
             background: rgba(0, 0, 0, 0.8);
         }
-
-        .clapper-board {
-            position: relative;
-
-            width: 390px;
-            min-height: 255px;
-
-            margin-top: 70px;
-            padding-top: 40px;
-
-            flex: 0 0 390px;
-        }
-
-        .clapper-top {
-            position: absolute;
-            top: 0;
-            left: 12px;
-            right: -8px;
-
-            height: 42px;
-
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            border-bottom: none;
-            border-radius: 8px 8px 0 0;
-
-            background:
-                repeating-linear-gradient(
-                    -45deg,
-                    #f1f1f1 0 16px,
-                    #111 16px 32px
-                );
-
-            transform: rotate(-4deg);
-            transform-origin: left bottom;
-
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
-        }
-
-        .clapper-body {
-            position: relative;
-
-            min-height: 220px;
-            box-sizing: border-box;
-            padding: 14px;
-
-            background: rgba(10, 10, 10, 0.93);
-            border: 2px solid rgba(255, 255, 255, 0.85);
-            border-radius: 8px;
-
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-        }
-
-        .clapper-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0;
-            min-width: 0;
-        }
-
-        .clapper-mini-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0;
-            min-width: 0;
-
-            border-top: 1px solid rgba(255, 255, 255, 0.8);
-        }
-
-        .clapper-field {
-            padding: 10px 0;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        .clapper-mini-row .clapper-field + .clapper-field {
-            border-top: 1px solid rgba(255, 255, 255, 0.8);
-        }
-
-        .field-label {
-            margin-bottom: 5px;
-
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1.2px;
-            color: rgba(255, 255, 255, 0.55);
-        }
-
-        .field-value {
-            font-size: 13px;
-            line-height: 1.25;
-            color: rgba(255, 255, 255, 0.82);
-            word-break: break-word;
-        }
-
-        .clip-title-wrapper {
-            width: 100%;
-            max-width: 100%;
-            min-width: 0;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        .clip-title {
-            display: inline-block;
-
-            font-size: 14px;
-            line-height: 1.2;
-            font-weight: 600;
-
-            color: rgba(255, 255, 255, 0.9);
-
-            white-space: nowrap;
-            transform: translateX(0);
-        }
-
-        .clip-title.scrolling {
-            animation-name: scroll-title;
-            animation-duration: var(--scroll-duration);
-            animation-timing-function: ease-in-out;
-            animation-iteration-count: infinite;
-            animation-direction: alternate;
-        }
-
-        @keyframes scroll-title {
-            0%,
-            18% {
-                transform: translateX(0);
-            }
-
-            82%,
-            100% {
-                transform: translateX(var(--scroll-distance));
-            }
-        }
-
-        @media (max-width: 1650px) {
-            .stage {
-                gap: 18px;
-            }
-
-            .clapper-board {
-                width: 330px;
-                flex-basis: 330px;
-                margin-top: 40px;
-            }
-
-            .video-container {
-                max-width: calc(100vw - 390px);
-            }
-        }
-
-        @media (max-width: 1300px) {
-            .stage {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .video-container {
-                order: 1;
-                max-width: 100%;
-                width: 100%;
-                height: auto;
-                aspect-ratio: 16 / 9;
-            }
-
-            .clapper-board {
-                order: 2;
-                margin-top: 0;
-                width: min(390px, 90vw);
-                flex-basis: auto;
-                align-self: center;
-            }
-        }
     </style>
 </head>
 
 <body>
 
 <div class="wrapper">
-    <div class="stage">
+    <div class="video-container">
+        <video
+            class="video active"
+            id="video-0"
+            preload="auto"
+            playsinline>
+        </video>
 
-        <div class="clapper-board">
-            <div class="clapper-top"></div>
+        <video
+            class="video"
+            id="video-1"
+            preload="auto"
+            playsinline>
+        </video>
 
-            <div class="clapper-body">
-                <div class="clapper-grid">
-                    <div class="clapper-field">
-                        <div class="field-label">TITTEL</div>
-                        <div class="clip-title-wrapper" id="clip-title-wrapper">
-                            <div class="clip-title" id="clip-title"></div>
-                        </div>
-                    </div>
+        <div class="clip-info">
+            <div class="clip-title-wrapper" id="clip-title-wrapper">
+                <div class="clip-title" id="clip-title"></div>
+            </div>
 
-                    <div class="clapper-mini-row">
-                        <div class="clapper-field">
-                            <div class="field-label">KLIPPET AV</div>
-                            <div class="field-value" id="clip-creator"></div>
-                        </div>
+            <div class="clip-details">
+                <span>Klippet av <span id="clip-creator"></span></span>
+                <span class="separator">•</span>
+                <span id="clip-date"></span>
+            </div>
 
-                        <div class="clapper-field">
-                            <div class="field-label">TIDSPUNKT</div>
-                            <div class="field-value" id="clip-date"></div>
-                        </div>
-
-                        <div class="clapper-field">
-                            <div class="field-label">KLIPP</div>
-                            <div class="field-value">
-                                <span id="clip-number"></span><span id="clip-tags"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="clip-extra">
+                <span id="clip-number"></span>
+                <span id="clip-tags"></span>
             </div>
         </div>
 
-        <div class="video-container">
-            <video
-                class="video active"
-                id="video-0"
-                preload="auto"
-                playsinline>
-            </video>
-
-            <video
-                class="video"
-                id="video-1"
-                preload="auto"
-                playsinline>
-            </video>
-
-            <div class="audio-overlay" id="audio-overlay">
-                <span>Klikk for lyd 🔊</span>
-            </div>
+        <div class="audio-overlay" id="audio-overlay">
+            <span>Klikk for lyd 🔊</span>
         </div>
-
     </div>
 </div>
 
