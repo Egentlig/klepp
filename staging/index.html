@@ -39,7 +39,7 @@
 
             width: 1280px;
             height: 720px;
-            max-width: calc(100vw - 360px);
+            max-width: calc(100vw - 490px);
 
             background-color: black;
             overflow: hidden;
@@ -96,13 +96,13 @@
         .clapper-board {
             position: relative;
 
-            width: 260px;
+            width: 390px;
             min-height: 255px;
 
             margin-top: 70px;
             padding-top: 40px;
 
-            flex: 0 0 260px;
+            flex: 0 0 390px;
         }
 
         .clapper-top {
@@ -135,7 +135,7 @@
 
             min-height: 220px;
             box-sizing: border-box;
-            padding: 14px 14px 16px 14px;
+            padding: 14px;
 
             background: rgba(10, 10, 10, 0.93);
             border: 2px solid rgba(255, 255, 255, 0.85);
@@ -147,22 +147,27 @@
         .clapper-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 12px;
+            gap: 0;
             min-width: 0;
         }
 
         .clapper-mini-row {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 10px;
+            gap: 0;
             min-width: 0;
+
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
         }
 
         .clapper-field {
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            padding: 8px 9px;
+            padding: 10px 0;
             min-width: 0;
             overflow: hidden;
+        }
+
+        .clapper-mini-row .clapper-field + .clapper-field {
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
         }
 
         .field-label {
@@ -228,13 +233,13 @@
             }
 
             .clapper-board {
-                width: 220px;
-                flex-basis: 220px;
+                width: 330px;
+                flex-basis: 330px;
                 margin-top: 40px;
             }
 
             .video-container {
-                max-width: calc(100vw - 280px);
+                max-width: calc(100vw - 390px);
             }
         }
 
@@ -245,6 +250,7 @@
             }
 
             .video-container {
+                order: 1;
                 max-width: 100%;
                 width: 100%;
                 height: auto;
@@ -252,8 +258,9 @@
             }
 
             .clapper-board {
+                order: 2;
                 margin-top: 0;
-                width: min(320px, 90vw);
+                width: min(390px, 90vw);
                 flex-basis: auto;
                 align-self: center;
             }
@@ -265,6 +272,7 @@
 
 <div class="wrapper">
     <div class="stage">
+
         <div class="clapper-board">
             <div class="clapper-top"></div>
 
@@ -284,7 +292,7 @@
                         </div>
 
                         <div class="clapper-field">
-                            <div class="field-label">DATO / KLOKKESLETT</div>
+                            <div class="field-label">TIDSPUNKT</div>
                             <div class="field-value" id="clip-date"></div>
                         </div>
 
@@ -318,6 +326,7 @@
                 <span>Klikk for lyd 🔊</span>
             </div>
         </div>
+
     </div>
 </div>
 
