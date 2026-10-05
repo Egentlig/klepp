@@ -315,6 +315,20 @@
             }
         }
 
+        function isDownloadUrlUsable(downloadUrl) {
+            if (typeof downloadUrl !== "string" || !downloadUrl.trim()) return false;
+
+            try {
+                const url = new URL(downloadUrl);
+                if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+
+                const expiresAt = getDownloadUrlExpiry(downloadUrl);
+                return expiresAt === null || expiresAt.getTime() > Date.now();
+            } catch {
+                return false;
+            }
+        }
+
         function logDownloadUrlExpiries(label, batch) {
             const now = Date.now();
             const expiries = batch
@@ -379,6 +393,7 @@
                     const refreshed = refreshedById.get(clip.id);
                     if (refreshed) {
                         Object.assign(clip, refreshed);
+                        clip.downloadUrl = refreshed.downloadUrl ?? null;
                         updated++;
                     }
                 }
@@ -439,6 +454,12 @@
 
         function prepareVideo(video, clip) {
             video.pause();
+            if (!isDownloadUrlUsable(clip.downloadUrl)) {
+                video.removeAttribute("src");
+                video.load();
+                return;
+            }
+
             video.src = clip.downloadUrl;
             video.preload = "auto";
             video.load();
@@ -461,9 +482,8 @@
             const attempt = ++playbackAttempt;
             lastPlaybackTime = 0;
 
-            const expiresAt = getDownloadUrlExpiry(clip.downloadUrl);
-            if (!clip.downloadUrl || (expiresAt && expiresAt.getTime() <= Date.now())) {
-                scheduleNextClip("Manglende eller utløpt downloadUrl", null, attempt);
+            if (!isDownloadUrlUsable(clip.downloadUrl)) {
+                scheduleNextClip("Manglende, ugyldig eller utløpt downloadUrl", null, attempt);
                 return;
             }
 
