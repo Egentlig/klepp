@@ -274,8 +274,7 @@
             viewCountLimit = 0;
         }
 
-        const clipsUrl =
-            `https://api.j4d.dev/streamrig/clip?start=${start}&end=${end}&viewCountLimit=${viewCountLimit}&ignoreTags=karaoke,teknisk,nattero`;
+        const clipsUrl = `https://api.j4d.dev/streamrig/clip?start=${start}&end=${end}&viewCountLimit=${viewCountLimit}&ignoreTags=karaoke,teknisk,nattero`;
 
         const response = await fetch(clipsUrl);
 
@@ -300,11 +299,11 @@
                     return null;
                 }
 
-                const { expires } = JSON.parse(token);
+                const {expires} = JSON.parse(token);
                 const expiresAt = new Date(expires * 1000);
 
                 return typeof expires === "number" &&
-                    Number.isFinite(expiresAt.getTime())
+                Number.isFinite(expiresAt.getTime())
                     ? expiresAt
                     : null;
             } catch {
@@ -404,8 +403,7 @@
             clipTitle.style.removeProperty("--scroll-duration");
 
             requestAnimationFrame(() => {
-                const overflow =
-                    clipTitle.scrollWidth - clipTitleWrapper.clientWidth;
+                const overflow = clipTitle.scrollWidth - clipTitleWrapper.clientWidth;
 
                 if (overflow <= 0) {
                     return;
@@ -414,16 +412,8 @@
                 const scrollDistance = -overflow;
                 const duration = Math.max(8, overflow / 35 + 5);
 
-                clipTitle.style.setProperty(
-                    "--scroll-distance",
-                    `${scrollDistance}px`
-                );
-
-                clipTitle.style.setProperty(
-                    "--scroll-duration",
-                    `${duration}s`
-                );
-
+                clipTitle.style.setProperty("--scroll-distance", `${scrollDistance}px`);
+                clipTitle.style.setProperty("--scroll-duration", `${duration}s`);
                 clipTitle.classList.add("scrolling");
             });
         }
@@ -436,18 +426,9 @@
 
             const date = new Date(clip.createdAt);
 
-            clipDate.innerText =
-                formatter
-                    .format(date)
-                    .replace(",", "");
-
-            clipNumber.innerText =
-                `${index + 1} / ${clips.length}`;
-
-            clipTags.innerText =
-                clip.tags?.length
-                    ? ` • ${clip.tags.join(", ")}`
-                    : "";
+            clipDate.innerText = formatter.format(date).replace(",", "");
+            clipNumber.innerText = `${index + 1} / ${clips.length}`;
+            clipTags.innerText = clip.tags?.length ? ` • ${clip.tags.join(", ")}` : "";
 
             updateTitleScrolling();
         }
@@ -464,16 +445,10 @@
                 return;
             }
 
-            const nextClipIndex =
-                (clipIndex + 1) % clips.length;
+            const nextClipIndex = (clipIndex + 1) % clips.length;
+            const nextVideoIndex = (activeVideoIndex + 1) % videos.length;
 
-            const nextVideoIndex =
-                (activeVideoIndex + 1) % videos.length;
-
-            prepareVideo(
-                videos[nextVideoIndex],
-                clips[nextClipIndex]
-            );
+            prepareVideo(videos[nextVideoIndex], clips[nextClipIndex]);
         }
 
         async function playCurrentClip() {
@@ -496,13 +471,8 @@
                 audioUnlocked = true;
                 hideAudioOverlay();
             } catch (error) {
-                if (
-                    error.name === "NotAllowedError" &&
-                    !audioUnlocked
-                ) {
-                    console.log(
-                        "Autoplay med lyd ble blokkert. Starter video muted."
-                    );
+                if (error.name === "NotAllowedError" && !audioUnlocked) {
+                    console.log("Autoplay med lyd ble blokkert. Starter video muted.");
 
                     video.muted = true;
 
@@ -510,18 +480,10 @@
                         await video.play();
                         showAudioOverlay();
                     } catch (mutedError) {
-                        console.error(
-                            "Kunne ikke spille av klipp, heller ikke muted",
-                            clips[clipIndex],
-                            mutedError
-                        );
+                        console.error("Kunne ikke spille av klipp, heller ikke muted", clips[clipIndex], mutedError);
                     }
                 } else {
-                    console.error(
-                        "Kunne ikke spille av klipp",
-                        clips[clipIndex],
-                        error
-                    );
+                    console.error("Kunne ikke spille av klipp", clips[clipIndex], error);
                 }
             }
 
@@ -534,11 +496,8 @@
             oldVideo.pause();
             oldVideo.classList.remove("active");
 
-            clipIndex =
-                (clipIndex + 1) % clips.length;
-
-            activeVideoIndex =
-                (activeVideoIndex + 1) % videos.length;
+            clipIndex = (clipIndex + 1) % clips.length;
+            activeVideoIndex = (activeVideoIndex + 1) % videos.length;
 
             await playCurrentClip();
         }
@@ -555,10 +514,7 @@
                 audioUnlocked = true;
                 hideAudioOverlay();
             } catch (error) {
-                console.error(
-                    "Kunne ikke aktivere lyd",
-                    error
-                );
+                console.error("Kunne ikke aktivere lyd", error);
             }
         });
 
@@ -571,11 +527,7 @@
 
             video.addEventListener("error", () => {
                 if (video === videos[activeVideoIndex]) {
-                    console.error(
-                        "Feil ved avspilling av klipp",
-                        clips[clipIndex],
-                        video.error
-                    );
+                    console.error("Feil ved avspilling av klipp", clips[clipIndex], video.error);
 
                     playNextClip();
                 }
@@ -585,10 +537,7 @@
         logDownloadUrlExpiries("Ved oppstart", clips);
         setInterval(refreshClips, 15 * 60 * 1000);
 
-        prepareVideo(
-            videos[activeVideoIndex],
-            clips[clipIndex]
-        );
+        prepareVideo(videos[activeVideoIndex], clips[clipIndex]);
 
         await playCurrentClip();
     });
