@@ -170,17 +170,17 @@
 <div class="wrapper">
     <div class="video-container">
         <video
-                class="video active"
-                id="video-0"
-                preload="auto"
-                playsinline>
+            class="video active"
+            id="video-0"
+            playsinline
+            preload="auto">
         </video>
 
         <video
-                class="video"
-                id="video-1"
-                preload="auto"
-                playsinline>
+            class="video"
+            id="video-1"
+            playsinline
+            preload="auto">
         </video>
 
         <div class="clip-info">
@@ -289,8 +289,12 @@
 
         let clipIndex = 0;
         let activeVideoIndex = 0;
-        let audioUnlocked = false;
         let refreshingClips = false;
+        let playbackAttempt = 0;
+        let playbackTimeout = null;
+        let nextClipTimeout = null;
+        let consecutiveFailures = 0;
+        let lastPlaybackTime = 0;
 
         function getDownloadUrlExpiry(downloadUrl) {
             try {
@@ -453,41 +457,102 @@
 
         async function playCurrentClip() {
             const video = videos[activeVideoIndex];
+            const clip = clips[clipIndex];
+            const attempt = ++playbackAttempt;
+            lastPlaybackTime = 0;
 
-            if (video.getAttribute("src") !== clips[clipIndex].downloadUrl) {
-                prepareVideo(video, clips[clipIndex]);
+            const expiresAt = getDownloadUrlExpiry(clip.downloadUrl);
+            if (!clip.downloadUrl || (expiresAt && expiresAt.getTime() <= Date.now())) {
+                scheduleNextClip("Manglende eller utløpt downloadUrl", null, attempt);
+                return;
             }
 
-            updateMetadata(clipIndex);
-
-            video.classList.add("active");
-            video.currentTime = 0;
-            video.volume = 1;
-            video.muted = false;
-
             try {
-                await video.play();
+                if (video.getAttribute("src") !== clip.downloadUrl || video.error) {
+                    prepareVideo(video, clip);
+                }
 
-                audioUnlocked = true;
+                updateMetadata(clipIndex);
+
+                video.classList.add("active");
+                video.currentTime = 0;
+                video.volume = 1;
+                video.muted = false;
+                resetPlaybackTimeout(attempt);
+
+                await video.play();
+                if (!isCurrentPlayback(attempt)) return;
+
                 hideAudioOverlay();
             } catch (error) {
-                if (error.name === "NotAllowedError" && !audioUnlocked) {
+                if (!isCurrentPlayback(attempt)) return;
+
+                if (error.name === "NotAllowedError") {
                     console.log("Autoplay med lyd ble blokkert. Starter video muted.");
 
                     video.muted = true;
 
                     try {
                         await video.play();
+                        if (!isCurrentPlayback(attempt)) return;
                         showAudioOverlay();
                     } catch (mutedError) {
-                        console.error("Kunne ikke spille av klipp, heller ikke muted", clips[clipIndex], mutedError);
+                        if (!isCurrentPlayback(attempt)) return;
+                        if (mutedError.name === "NotAllowedError") {
+                            clearTimeout(playbackTimeout);
+                            showAudioOverlay();
+                        } else {
+                            scheduleNextClip("Kunne ikke spille av klipp, heller ikke muted", mutedError, attempt);
+                            return;
+                        }
                     }
                 } else {
-                    console.error("Kunne ikke spille av klipp", clips[clipIndex], error);
+                    scheduleNextClip("Kunne ikke spille av klipp", error, attempt);
+                    return;
                 }
             }
 
-            preloadNextClip();
+            if (isCurrentPlayback(attempt)) {
+                preloadNextClip();
+            }
+        }
+
+        function isCurrentPlayback(attempt) {
+            return attempt === playbackAttempt && nextClipTimeout === null;
+        }
+
+        function resetPlaybackTimeout(attempt) {
+            clearTimeout(playbackTimeout);
+            playbackTimeout = setTimeout(() => {
+                scheduleNextClip("Ingen fremdrift i avspillingen på 30 sekunder", null, attempt);
+            }, 30000);
+        }
+
+        function scheduleNextClip(reason = null, error = null, attempt = playbackAttempt) {
+            if (!isCurrentPlayback(attempt)) return;
+
+            clearTimeout(playbackTimeout);
+            let delay = 0;
+
+            if (reason) {
+                console.warn("Hopper over klipp", clips[clipIndex].id, reason, error);
+                consecutiveFailures++;
+                if (consecutiveFailures >= clips.length) {
+                    delay = 60000;
+                    console.warn("Alle klipp har feilet. Prøver igjen om ett minutt.");
+                }
+            } else {
+                consecutiveFailures = 0;
+            }
+
+            // Sett sperren før pause(), slik at samme feil ikke utløser flere hopp.
+            nextClipTimeout = setTimeout(() => {
+                nextClipTimeout = null;
+                if (delay > 0) consecutiveFailures = 0;
+                playNextClip();
+            }, delay);
+            videos[activeVideoIndex].pause();
+            hideAudioOverlay();
         }
 
         async function playNextClip() {
@@ -504,40 +569,54 @@
 
         audioOverlay.addEventListener("click", async () => {
             const video = videos[activeVideoIndex];
+            const attempt = playbackAttempt;
+            if (!isCurrentPlayback(attempt)) return;
 
             try {
                 video.muted = false;
                 video.volume = 1;
+                resetPlaybackTimeout(attempt);
 
                 await video.play();
+                if (!isCurrentPlayback(attempt)) return;
 
-                audioUnlocked = true;
                 hideAudioOverlay();
+                resetPlaybackTimeout(attempt);
             } catch (error) {
+                if (!isCurrentPlayback(attempt)) return;
                 console.error("Kunne ikke aktivere lyd", error);
+                if (error.name === "NotAllowedError") {
+                    clearTimeout(playbackTimeout);
+                    showAudioOverlay();
+                } else {
+                    scheduleNextClip("Kunne ikke aktivere avspilling", error, attempt);
+                }
             }
         });
 
         videos.forEach((video) => {
             video.addEventListener("ended", () => {
-                if (video === videos[activeVideoIndex]) {
-                    playNextClip();
+                if (video === videos[activeVideoIndex] && video.ended) {
+                    scheduleNextClip();
                 }
             });
 
             video.addEventListener("error", () => {
-                if (video === videos[activeVideoIndex]) {
-                    console.error("Feil ved avspilling av klipp", clips[clipIndex], video.error);
+                if (video === videos[activeVideoIndex] && video.error) {
+                    scheduleNextClip("Feil ved avspilling av klipp", video.error);
+                }
+            });
 
-                    playNextClip();
+            video.addEventListener("timeupdate", () => {
+                if (video === videos[activeVideoIndex] && isCurrentPlayback(playbackAttempt) && video.currentTime > lastPlaybackTime) {
+                    lastPlaybackTime = video.currentTime;
+                    resetPlaybackTimeout(playbackAttempt);
                 }
             });
         });
 
         logDownloadUrlExpiries("Ved oppstart", clips);
         setInterval(refreshClips, 15 * 60 * 1000);
-
-        prepareVideo(videos[activeVideoIndex], clips[clipIndex]);
 
         await playCurrentClip();
     });
