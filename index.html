@@ -170,17 +170,17 @@
 <div class="wrapper">
     <div class="video-container">
         <video
-                class="video active"
-                id="video-0"
-                preload="auto"
-                playsinline>
+            class="video active"
+            id="video-0"
+            playsinline
+            preload="auto">
         </video>
 
         <video
-                class="video"
-                id="video-1"
-                preload="auto"
-                playsinline>
+            class="video"
+            id="video-1"
+            playsinline
+            preload="auto">
         </video>
 
         <div class="clip-info">
@@ -274,9 +274,9 @@
             viewCountLimit = 0;
         }
 
-        const response = await fetch(
-            `https://api.j4d.dev/streamrig/clip?start=${start}&end=${end}&viewCountLimit=${viewCountLimit}&ignoreTags=karaoke,teknisk,nattero`
-        );
+        const clipsUrl = `https://api.j4d.dev/streamrig/clip?start=${start}&end=${end}&viewCountLimit=${viewCountLimit}&ignoreTags=karaoke,teknisk,nattero`;
+
+        const response = await fetch(clipsUrl);
 
         const clips = await response.json();
 
@@ -289,7 +289,109 @@
 
         let clipIndex = 0;
         let activeVideoIndex = 0;
-        let audioUnlocked = false;
+        let refreshingClips = false;
+        let playbackAttempt = 0;
+        let playbackTimeout = null;
+        let nextClipTimeout = null;
+        let consecutiveFailures = 0;
+        let lastPlaybackTime = 0;
+
+        function getDownloadUrlExpiry(downloadUrl) {
+            try {
+                const token = new URL(downloadUrl).searchParams.get("token");
+                if (!token) {
+                    return null;
+                }
+
+                const {expires} = JSON.parse(token);
+                const expiresAt = new Date(expires * 1000);
+
+                return typeof expires === "number" &&
+                Number.isFinite(expiresAt.getTime())
+                    ? expiresAt
+                    : null;
+            } catch {
+                return null;
+            }
+        }
+
+        function logDownloadUrlExpiries(label, batch) {
+            const now = Date.now();
+            const expiries = batch
+                .map(clip => ({
+                    id: clip.id,
+                    expiresAt: getDownloadUrlExpiry(clip.downloadUrl),
+                }))
+                .filter(clip => clip.expiresAt !== null);
+
+            const expired = expiries.filter(clip => clip.expiresAt.getTime() <= now);
+            const upcoming = expiries
+                .filter(clip => clip.expiresAt.getTime() > now)
+                .sort((a, b) => a.expiresAt - b.expiresAt);
+
+            console.info(
+                `${label}: ${expired.length} av ${batch.length} klipp-URL-er har utløpt. ` +
+                `${batch.length - expiries.length} har ukjent utløpstid.`
+            );
+
+            if (expired.length > 0) {
+                console.warn(`${label}: Utløpte klipp-URL-er`, expired);
+            }
+
+            console.info(
+                `${label}: Neste utløpstid (UTC):`,
+                upcoming.length > 0 ? upcoming[0].expiresAt.toISOString() : "Ingen kjent",
+                upcoming.length > 0 ? `Klipp: ${upcoming[0].id}` : ""
+            );
+        }
+
+        async function refreshClips() {
+            if (refreshingClips) {
+                return;
+            }
+
+            refreshingClips = true;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 30000);
+
+            try {
+                const response = await fetch(clipsUrl, {
+                    cache: "no-store",
+                    signal: controller.signal,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const refreshedClips = await response.json();
+                if (!Array.isArray(refreshedClips) ||
+                    refreshedClips.some(clip => !clip || typeof clip.id !== "string")) {
+                    throw new Error("Uventet klipprespons");
+                }
+
+                logDownloadUrlExpiries("Før oppdatering", clips);
+
+                const refreshedById = new Map(refreshedClips.map(clip => [clip.id, clip]));
+                let updated = 0;
+
+                for (const clip of clips) {
+                    const refreshed = refreshedById.get(clip.id);
+                    if (refreshed) {
+                        Object.assign(clip, refreshed);
+                        updated++;
+                    }
+                }
+
+                console.info(`Oppdaterte ${updated} av ${clips.length} klipp uten å endre rekkefølgen.`);
+                logDownloadUrlExpiries("Ny batch", refreshedClips);
+            } catch (error) {
+                console.warn("Kunne ikke oppdatere klippdata", error);
+            } finally {
+                clearTimeout(timeout);
+                refreshingClips = false;
+            }
+        }
 
         function showAudioOverlay() {
             audioOverlay.classList.add("visible");
@@ -305,8 +407,7 @@
             clipTitle.style.removeProperty("--scroll-duration");
 
             requestAnimationFrame(() => {
-                const overflow =
-                    clipTitle.scrollWidth - clipTitleWrapper.clientWidth;
+                const overflow = clipTitle.scrollWidth - clipTitleWrapper.clientWidth;
 
                 if (overflow <= 0) {
                     return;
@@ -315,16 +416,8 @@
                 const scrollDistance = -overflow;
                 const duration = Math.max(8, overflow / 35 + 5);
 
-                clipTitle.style.setProperty(
-                    "--scroll-distance",
-                    `${scrollDistance}px`
-                );
-
-                clipTitle.style.setProperty(
-                    "--scroll-duration",
-                    `${duration}s`
-                );
-
+                clipTitle.style.setProperty("--scroll-distance", `${scrollDistance}px`);
+                clipTitle.style.setProperty("--scroll-duration", `${duration}s`);
                 clipTitle.classList.add("scrolling");
             });
         }
@@ -337,18 +430,9 @@
 
             const date = new Date(clip.createdAt);
 
-            clipDate.innerText =
-                formatter
-                    .format(date)
-                    .replace(",", "");
-
-            clipNumber.innerText =
-                `${index + 1} / ${clips.length}`;
-
-            clipTags.innerText =
-                clip.tags?.length
-                    ? ` • ${clip.tags.join(", ")}`
-                    : "";
+            clipDate.innerText = formatter.format(date).replace(",", "");
+            clipNumber.innerText = `${index + 1} / ${clips.length}`;
+            clipTags.innerText = clip.tags?.length ? ` • ${clip.tags.join(", ")}` : "";
 
             updateTitleScrolling();
         }
@@ -365,64 +449,110 @@
                 return;
             }
 
-            const nextClipIndex =
-                (clipIndex + 1) % clips.length;
+            const nextClipIndex = (clipIndex + 1) % clips.length;
+            const nextVideoIndex = (activeVideoIndex + 1) % videos.length;
 
-            const nextVideoIndex =
-                (activeVideoIndex + 1) % videos.length;
-
-            prepareVideo(
-                videos[nextVideoIndex],
-                clips[nextClipIndex]
-            );
+            prepareVideo(videos[nextVideoIndex], clips[nextClipIndex]);
         }
 
         async function playCurrentClip() {
             const video = videos[activeVideoIndex];
+            const clip = clips[clipIndex];
+            const attempt = ++playbackAttempt;
+            lastPlaybackTime = 0;
 
-            updateMetadata(clipIndex);
-
-            video.classList.add("active");
-            video.currentTime = 0;
-            video.volume = 1;
-            video.muted = false;
+            const expiresAt = getDownloadUrlExpiry(clip.downloadUrl);
+            if (!clip.downloadUrl || (expiresAt && expiresAt.getTime() <= Date.now())) {
+                scheduleNextClip("Manglende eller utløpt downloadUrl", null, attempt);
+                return;
+            }
 
             try {
-                await video.play();
+                if (video.getAttribute("src") !== clip.downloadUrl || video.error) {
+                    prepareVideo(video, clip);
+                }
 
-                audioUnlocked = true;
+                updateMetadata(clipIndex);
+
+                video.classList.add("active");
+                video.currentTime = 0;
+                video.volume = 1;
+                video.muted = false;
+                resetPlaybackTimeout(attempt);
+
+                await video.play();
+                if (!isCurrentPlayback(attempt)) return;
+
                 hideAudioOverlay();
             } catch (error) {
-                if (
-                    error.name === "NotAllowedError" &&
-                    !audioUnlocked
-                ) {
-                    console.log(
-                        "Autoplay med lyd ble blokkert. Starter video muted."
-                    );
+                if (!isCurrentPlayback(attempt)) return;
+
+                if (error.name === "NotAllowedError") {
+                    console.log("Autoplay med lyd ble blokkert. Starter video muted.");
 
                     video.muted = true;
 
                     try {
                         await video.play();
+                        if (!isCurrentPlayback(attempt)) return;
                         showAudioOverlay();
                     } catch (mutedError) {
-                        console.error(
-                            "Kunne ikke spille av klipp, heller ikke muted",
-                            clips[clipIndex],
-                            mutedError
-                        );
+                        if (!isCurrentPlayback(attempt)) return;
+                        if (mutedError.name === "NotAllowedError") {
+                            clearTimeout(playbackTimeout);
+                            showAudioOverlay();
+                        } else {
+                            scheduleNextClip("Kunne ikke spille av klipp, heller ikke muted", mutedError, attempt);
+                            return;
+                        }
                     }
                 } else {
-                    console.error(
-                        "Kunne ikke spille av klipp",
-                        clips[clipIndex],
-                        error
-                    );
+                    scheduleNextClip("Kunne ikke spille av klipp", error, attempt);
+                    return;
                 }
             }
 
-            preloadNextClip();
+            if (isCurrentPlayback(attempt)) {
+                preloadNextClip();
+            }
+        }
+
+        function isCurrentPlayback(attempt) {
+            return attempt === playbackAttempt && nextClipTimeout === null;
+        }
+
+        function resetPlaybackTimeout(attempt) {
+            clearTimeout(playbackTimeout);
+            playbackTimeout = setTimeout(() => {
+                scheduleNextClip("Ingen fremdrift i avspillingen på 30 sekunder", null, attempt);
+            }, 30000);
+        }
+
+        function scheduleNextClip(reason = null, error = null, attempt = playbackAttempt) {
+            if (!isCurrentPlayback(attempt)) return;
+
+            clearTimeout(playbackTimeout);
+            let delay = 0;
+
+            if (reason) {
+                console.warn("Hopper over klipp", clips[clipIndex].id, reason, error);
+                consecutiveFailures++;
+                if (consecutiveFailures >= clips.length) {
+                    delay = 60000;
+                    console.warn("Alle klipp har feilet. Prøver igjen om ett minutt.");
+                }
+            } else {
+                consecutiveFailures = 0;
+            }
+
+            // Sett sperren før pause(), slik at samme feil ikke utløser flere hopp.
+            nextClipTimeout = setTimeout(() => {
+                nextClipTimeout = null;
+                if (delay > 0) consecutiveFailures = 0;
+                playNextClip();
+            }, delay);
+            videos[activeVideoIndex].pause();
+            hideAudioOverlay();
         }
 
         async function playNextClip() {
@@ -431,58 +561,62 @@
             oldVideo.pause();
             oldVideo.classList.remove("active");
 
-            clipIndex =
-                (clipIndex + 1) % clips.length;
-
-            activeVideoIndex =
-                (activeVideoIndex + 1) % videos.length;
+            clipIndex = (clipIndex + 1) % clips.length;
+            activeVideoIndex = (activeVideoIndex + 1) % videos.length;
 
             await playCurrentClip();
         }
 
         audioOverlay.addEventListener("click", async () => {
             const video = videos[activeVideoIndex];
+            const attempt = playbackAttempt;
+            if (!isCurrentPlayback(attempt)) return;
 
             try {
                 video.muted = false;
                 video.volume = 1;
+                resetPlaybackTimeout(attempt);
 
                 await video.play();
+                if (!isCurrentPlayback(attempt)) return;
 
-                audioUnlocked = true;
                 hideAudioOverlay();
+                resetPlaybackTimeout(attempt);
             } catch (error) {
-                console.error(
-                    "Kunne ikke aktivere lyd",
-                    error
-                );
+                if (!isCurrentPlayback(attempt)) return;
+                console.error("Kunne ikke aktivere lyd", error);
+                if (error.name === "NotAllowedError") {
+                    clearTimeout(playbackTimeout);
+                    showAudioOverlay();
+                } else {
+                    scheduleNextClip("Kunne ikke aktivere avspilling", error, attempt);
+                }
             }
         });
 
         videos.forEach((video) => {
             video.addEventListener("ended", () => {
-                if (video === videos[activeVideoIndex]) {
-                    playNextClip();
+                if (video === videos[activeVideoIndex] && video.ended) {
+                    scheduleNextClip();
                 }
             });
 
             video.addEventListener("error", () => {
-                if (video === videos[activeVideoIndex]) {
-                    console.error(
-                        "Feil ved avspilling av klipp",
-                        clips[clipIndex],
-                        video.error
-                    );
+                if (video === videos[activeVideoIndex] && video.error) {
+                    scheduleNextClip("Feil ved avspilling av klipp", video.error);
+                }
+            });
 
-                    playNextClip();
+            video.addEventListener("timeupdate", () => {
+                if (video === videos[activeVideoIndex] && isCurrentPlayback(playbackAttempt) && video.currentTime > lastPlaybackTime) {
+                    lastPlaybackTime = video.currentTime;
+                    resetPlaybackTimeout(playbackAttempt);
                 }
             });
         });
 
-        prepareVideo(
-            videos[activeVideoIndex],
-            clips[clipIndex]
-        );
+        logDownloadUrlExpiries("Ved oppstart", clips);
+        setInterval(refreshClips, 15 * 60 * 1000);
 
         await playCurrentClip();
     });
